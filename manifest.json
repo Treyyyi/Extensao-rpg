@@ -4,6 +4,7 @@
   "manifest_version": 1,
   "author": "Perplexity",
   "icon": "./icon.svg",
+  "homepage_url": "https://github.com/Treyyyi/Extensao-rpg",
   "action": {
     "title": "Fichas",
     "icon": "./icon.svg",
