@@ -1,0 +1,14 @@
+{
+  "name": "Exemplo Basico Owlbear GitHub Pages",
+  "version": "1.0.0",
+  "manifest_version": 1,
+  "author": "Perplexity",
+  "icon": "./icon.svg",
+  "action": {
+    "title": "Exemplo Basico",
+    "icon": "./icon.svg",
+    "popover": "./index.html",
+    "height": 420,
+    "width": 360
+  }
+}
