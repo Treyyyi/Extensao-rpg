@@ -5,11 +5,4 @@
   "author": "Perplexity",
   "icon": "./icon.svg",
   "homepage_url": "https://github.com/Treyyyi/Extensao-rpg",
-  "action": {
-    "title": "Fichas",
-    "icon": "./icon.svg",
-    "popover": "./index.html",
-    "height": 720,
-    "width": 1100
-  }
 }
