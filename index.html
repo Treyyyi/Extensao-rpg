@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cicatrizes Fichas</title>
+  <style>
+    :root {
+      --bg: #161311;
+      --panel: #211b18;
+      --panel-2: #2b2420;
+      --border: #4a3a31;
+      --text: #f2e7db;
+      --muted: #b8aa9d;
+      --accent: #b78552;
+      --accent-2: #8c5b34;
+      --danger: #c75b5b;
+      --ok: #5ebd83;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, system-ui, sans-serif;
+      min-height: 100vh;
+    }
+    .app {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      min-height: 100vh;
+    }
+    .sidebar, .main {
+      padding: 16px;
+    }
+    .sidebar {
+      border-right: 1px solid var(--border);
+      background: #120f0e;
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+    .main {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+    }
+    h1,h2,h3 { margin: 0 0 8px; }
+    h1 { font-size: 18px; }
+    h2 { font-size: 15px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+    h3 { font-size: 15px; }
+    p, label, small { color: var(--muted); }
+    input, textarea, select {
+      width: 100%;
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-top: 6px;
+    }
+    textarea { min-height: 72px; resize: vertical; }
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--accent);
+      color: #171311;
+    }
+    button.secondary { background: #3a2d25; color: var(--text); }
+    button.danger { background: var(--danger); color: white; }
+    .row { display: grid; gap: 10px; }
+    .row.two { grid-template-columns: 1fr 1fr; }
+    .row.three { grid-template-columns: repeat(3, 1fr); }
+    .row.four { grid-template-columns: repeat(4, 1fr); }
+    .sheet-list { display: grid; gap: 8px; }
+    .sheet-item {
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      cursor: pointer;
+    }
+    .sheet-item.active { outline: 2px solid var(--accent); }
+    .badge { display: inline-block; padding: 4px 8px; border-radius: 999px; background: #3a2d25; color: var(--text); font-size: 12px; }
+    .topbar { display: flex; gap: 8px; justify-content: space-between; align-items: center; }
+    .muted { color: var(--muted); }
+    .status-ok { color: var(--ok); font-weight: 700; }
+    .hidden { display: none !important; }
+    .grid-skills { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .perm-row { display: grid; grid-template-columns: 1fr 120px 120px; gap: 8px; align-items: center; }
+    .help { font-size: 12px; line-height: 1.45; }
+    @media (max-width: 900px) {
+      .app { grid-template-columns: 1fr; }
+      .row.two, .row.three, .row.four, .grid-skills, .perm-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <section class="card">
+        <h1>Cicatrizes Fichas</h1>
+        <p class="help">Extensão básica para guardar fichas compartilhadas, com edição em tempo real e permissões por jogador.</p>
+      </section>
+
+      <section class="card">
+        <h2>Conexão</h2>
+        <div id="firebaseStatus" class="muted">Aguardando configuração do Firebase...</div>
+        <div id="roomStatus" class="muted" style="margin-top:6px;">Lendo sala...</div>
+      </section>
+
+      <section class="card">
+        <h2>Seu acesso</h2>
+        <label>Seu nome na mesa
+          <input id="currentUserName" placeholder="Ex.: Kael / Mestre" />
+        </label>
+        <label>Seu papel
+          <select id="currentRole">
+            <option value="viewer">Leitor</option>
+            <option value="editor">Editor</option>
+            <option value="gm">Mestre</option>
+          </select>
+        </label>
+        <small>Na prática, o ideal é o mestre usar gm e os jogadores usarem o nome deles certinho.</small>
+      </section>
+
+      <section class="card">
+        <div class="topbar">
+          <h2>Fichas</h2>
+          <button id="newSheetBtn">Nova</button>
+        </div>
+        <div id="sheetList" class="sheet-list" style="margin-top:10px;"></div>
+      </section>
+    </aside>
+
+    <main class="main">
+      <section class="card">
+        <div class="topbar">
+          <div>
+            <h1 id="sheetTitle">Nenhuma ficha selecionada</h1>
+            <div id="saveStatus" class="muted">Sem alterações</div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button id="duplicateBtn" class="secondary">Duplicar</button>
+            <button id="deleteBtn" class="danger">Excluir</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="emptyState" class="card">
+        <h3>Comece criando uma ficha</h3>
+        <p>Use o botão <strong>Nova</strong> na lateral. Depois, você pode liberar visualização ou edição só para quem quiser.</p>
+      </section>
+
+      <section id="sheetPanel" class="hidden">
+        <section class="card row two">
+          <label>Nome do personagem
+            <input data-field="identity.name" placeholder="Nome do personagem" />
+          </label>
+          <label>Jogador responsável
+            <input data-field="identity.player" placeholder="Nome do jogador" />
+          </label>
+          <label>Raça
+            <input data-field="identity.race" placeholder="Humano, Orc, Goblin..." />
+          </label>
+          <label>Arquétipo
+            <input data-field="identity.archetype" placeholder="Guerreiro, Batedor, Bárbaro..." />
+          </label>
+          <label>Antecedente
+            <input data-field="identity.background" placeholder="Antecedente" />
+          </label>
+          <label>Fé / Condição
+            <input data-field="identity.faith" placeholder="Fé, condição ou observação" />
+          </label>
+        </section>
+
+        <section class="card">
+          <h2>Atributos</h2>
+          <div class="row four">
+            <label>FOR<input type="number" data-field="attributes.FOR" /></label>
+            <label>DES<input type="number" data-field="attributes.DES" /></label>
+            <label>CON<input type="number" data-field="attributes.CON" /></label>
+            <label>TAM<input type="number" data-field="attributes.TAM" /></label>
+            <label>FÉ<input type="number" data-field="attributes.FE" /></label>
+            <label>INT<input type="number" data-field="attributes.INT" /></label>
+            <label>EDU<input type="number" data-field="attributes.EDU" /></label>
+            <label>CAR<input type="number" data-field="attributes.CAR" /></label>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Derivados</h2>
+          <div class="row four">
+            <label>HP Máximo<input type="number" data-field="derived.hp" /></label>
+            <label>Defesa Base<input type="number" data-field="derived.defense" /></label>
+            <label>Iniciativa<input type="number" data-field="derived.initiative" /></label>
+            <label>Movimento<input data-field="derived.movement" placeholder="9 m" /></label>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Perícias básicas</h2>
+          <div class="grid-skills">
+            <label>Visão<input type="number" data-field="skills.visao" /></label>
+            <label>Ouvir<input type="number" data-field="skills.ouvir" /></label>
+            <label>Furtividade<input type="number" data-field="skills.furtividade" /></label>
+            <label>Atletismo<input type="number" data-field="skills.atletismo" /></label>
+            <label>Acrobacia<input type="number" data-field="skills.acrobacia" /></label>
+            <label>Sobrevivência<input type="number" data-field="skills.sobrevivencia" /></label>
+            <label>Esquiva<input type="number" data-field="skills.esquiva" /></label>
+            <label>Vigor<input type="number" data-field="skills.vigor" /></label>
+            <label>Persuasão<input type="number" data-field="skills.persuasao" /></label>
+            <label>Intimidação<input type="number" data-field="skills.intimidacao" /></label>
+            <label>Intuição<input type="number" data-field="skills.intuicao" /></label>
+            <label>Investigação<input type="number" data-field="skills.investigacao" /></label>
+          </div>
+        </section>
+
+        <section class="card row two">
+          <label>Feitos
+            <textarea data-field="notes.feats" placeholder="Liste os feitos do personagem"></textarea>
+          </label>
+          <label>Equipamentos
+            <textarea data-field="notes.gear" placeholder="Armas, armaduras, itens, recursos"></textarea>
+          </label>
+          <label>História e notas
+            <textarea data-field="notes.story" placeholder="Resumo do personagem"></textarea>
+          </label>
+          <label>Cicatrizes / condições
+            <textarea data-field="notes.scars" placeholder="Marcas, ferimentos, condições, efeitos"></textarea>
+          </label>
+        </section>
+
+        <section class="card">
+          <div class="topbar">
+            <h2>Permissões</h2>
+            <span class="badge">gm altera tudo</span>
+          </div>
+          <p class="help" style="margin-bottom:10px;">Escreva o nome do jogador exatamente como ele vai usar no campo “Seu nome na mesa”. Você pode permitir apenas ver ou também editar.</p>
+          <div id="permList" class="row"></div>
+          <div class="perm-row" style="margin-top:10px;">
+            <input id="permName" placeholder="Nome do jogador" />
+            <select id="permMode">
+              <option value="view">Pode ver</option>
+              <option value="edit">Pode editar</option>
+            </select>
+            <button id="addPermBtn">Adicionar</button>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

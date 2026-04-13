@@ -1,0 +1,14 @@
+{
+  "name": "Cicatrizes Fichas",
+  "version": "1.0.0",
+  "manifest_version": 1,
+  "author": "Perplexity",
+  "icon": "./icon.svg",
+  "action": {
+    "title": "Fichas",
+    "icon": "./icon.svg",
+    "popover": "./index.html",
+    "height": 720,
+    "width": 1100
+  }
+}
